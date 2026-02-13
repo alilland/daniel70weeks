@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bundle install:*)",
+      "Bash(bundle config set:*)",
+      "Bash(git init:*)",
+      "Bash(rvm rvmrc warning ignore:*)",
+      "Bash(chmod:*)",
+      "Bash(ruby:*)"
+    ]
+  }
+}

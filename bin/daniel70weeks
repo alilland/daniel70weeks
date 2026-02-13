@@ -1,0 +1,68 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../settings"
+
+module Daniel70Weeks
+  class CLI < Thor
+    desc "calculate DATE", "Calculate 69 weeks (173,880 days) from a Hebrew date"
+    long_desc <<~DESC
+      Calculate the end date of 69 prophetic weeks (173,880 days) from a Hebrew anchor date.
+
+      Examples:
+        daniel70weeks calculate "Nisan 1, 444 BC"
+        daniel70weeks calculate "Nisan 10, 445 BC"
+    DESC
+    def calculate(date)
+      parsed = Parser.parse_hebrew_date(date)
+
+      # Convert Hebrew anchor date to JDN
+      start_jd = Converter.hebrew_to_jd(parsed[:hebrew_year], parsed[:month], parsed[:day])
+
+      # Add 69 prophetic weeks
+      end_jd = start_jd + TOTAL_DAYS
+
+      # Convert to calendar dates
+      gregorian_date = Converter.jd_to_gregorian(end_jd)
+      julian_date = Converter.jd_to_julian(end_jd)
+      hebrew_date = Converter.jd_to_hebrew(end_jd)
+
+      result_hebrew_year = hebrew_date[:year]
+
+      # Calculate Passover dates (Nisan 14 = eve, Nisan 15 = day)
+      passover_eve_jd = Converter.hebrew_to_jd(result_hebrew_year, 1, 14)
+      passover_day_jd = Converter.hebrew_to_jd(result_hebrew_year, 1, 15)
+      passover_eve = Converter.jd_to_julian(passover_eve_jd)
+      passover_day = Converter.jd_to_julian(passover_day_jd)
+
+      pastel = Pastel.new
+      puts pastel.bold("Anchor: #{date}")
+      puts "Hebrew year: #{parsed[:hebrew_year]}"
+      puts "Start JDN: #{start_jd}"
+      puts ""
+      puts pastel.bold("Adding #{TOTAL_DAYS} days (69 weeks × 7 years × 360 days)")
+      puts ""
+      puts pastel.bold("Result:")
+      puts "End JDN: #{end_jd}"
+      puts "Hebrew: #{Converter.format_hebrew(hebrew_date[:year], hebrew_date[:month], hebrew_date[:day])}"
+      puts "Gregorian: #{Converter.format_date(gregorian_date, :gregorian)}"
+      puts "Julian: #{Converter.format_date(julian_date, :julian)}"
+      puts ""
+      puts pastel.bold("Passover #{gregorian_date.year} AD (Hebrew year #{result_hebrew_year}):")
+      puts "Nisan 14 (Passover eve): #{passover_eve.strftime('%A, %B %-d')} (Julian)"
+      puts "Nisan 15 (Passover day): #{passover_day.strftime('%A, %B %-d')} (Julian)"
+    rescue ArgumentError => e
+      puts "Error: #{e.message}"
+      exit 1
+    end
+
+    desc "version", "Print version"
+    def version
+      puts "daniel70weeks v0.1.0"
+    end
+
+    default_task :help
+  end
+end
+
+Daniel70Weeks::CLI.start(ARGV)
